@@ -2,7 +2,7 @@ const Web3 = require('web3');
 const TX = require("ethereumjs-tx");
 //const { interface, bytecode} = require('./compile');
 
-var trx;
+//var trx;
 const web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/v3/5ba1700b96a4442a91fcdfbeb868bd5f"));
 
 const interface = [{"constant":true,"inputs":[{"name":"_tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"name":"","type":"address"}],
@@ -30,22 +30,26 @@ const interface = [{"constant":true,"inputs":[{"name":"_tokenId","type":"uint256
 {"anonymous":false,"inputs":[{"indexed":true,"name":"_owner","type":"address"},{"indexed":true,"name":"_approved","type":"address"},
 {"indexed":true,"name":"_tokenId","type":"uint256"}],"name":"Approval","type":"event"}];
 
-var _interact = new web3.eth.Contract(interface, '0x9F0A14b16E84B71E5f48CF3B9635ec4F2eC7143E');
+var deployeContractdAddress = '0xc1A8f5738AFB7dA4fbeff31C97862e28bA7DA395';
+
+var ownerAddress = '0x63580a35A6B6Da5c13c1Bf9c62C51FbCe64c806F';
+
+var _interact = new web3.eth.Contract(interface, deployeContractdAddress);
 
 
-const transaction = async(trx) =>{
+const runCode = async(trx) =>{
     const accounts = await web3.eth.getAccounts();
-    var count = await web3.eth.getTransactionCount("0x63580a35A6B6Da5c13c1Bf9c62C51FbCe64c806F");
+    var count = await web3.eth.getTransactionCount(ownerAddress);
 
     
     const gasprice = await web3.eth.getGasPrice();
     console.log(gasprice);
     var howtotransfer = {
-      from : '0x63580a35A6B6Da5c13c1Bf9c62C51FbCe64c806F',
+      from : ownerAddress,
       nonce : web3.utils.toHex(count),
       gasLimit : web3.utils.toHex(2500000),
       gasPrice : web3.utils.toHex(gasprice*1.30),
-      to : '0x9F0A14b16E84B71E5f48CF3B9635ec4F2eC7143E',
+      to : deployeContractdAddress,
       data : trx
     }
     var privatekey =  new Buffer.from('7958cb545ad3be8ad142a8f632c7c7cc5c8bc18bdd098f69998ee026e4fa525a', 'hex');
@@ -60,69 +64,111 @@ const transaction = async(trx) =>{
       console.log(e);
     }
   } ;
-  tokenCreate();
+  //details();
 
-  async function tokenCreate(){
+async function setGameContractAddress (_address){
+  try{
+    let gameAddress = await _interact.methods.setGameContractAddress(_address).encodeABI();
+    runCode(gameAddress);
+  }
+  catch(e){
+    throw{ message : "Contract not set"};
+  }
+}
+
+async function tokenCreate(_address, tokenType, tokenValue){
     try{
-    trx= await _interact.methods.createToken ('0x114dF342f9649f66E3e670bA29418b4693Fe3dA3' ,2 ,20 ).encodeABI();
-   transaction(trx);
+    let creation = await _interact.methods.createToken (_address, tokenType, tokenValue).encodeABI();
+    runCode(creation);
     }
     catch (e){
       throw{ message : "Token not created"};
     }
  }
  
- async function remove(){
+async function remove(tokenId){
    try{
-    trx = await _interact.methods.burn('0x114dF342f9649f66E3e670bA29418b4693Fe3dA3',19).encodeABI();
-    transaction(trx);
+    let cardDelete = await _interact.methods.burn(tokenId).encodeABI();
+    runCode(cardDelete);
    }
     catch (e){
       throw{ message : "Token not burn"};
     }
  }
  
- async function tokenCount(){
+ async function details(tokeId){
+  try{
+   var cardType;
+   cardType = await _interact.methods.tokenDetails(tokeId).call();
+   //It will return both type and value both respectively 
+   //transaction(trx);
+   console.log(cardType);
+   return (cardType);
+  }
+  catch (e) {
+    throw{ message : "Token details not given"};
+  }
+}
+
+async function returnOwnedToken(_address){
+  try{
+    let owner = await _interact.methods.returnOwnedToken(_address).call();
+    console.log(owner);
+    return owner;
+  }
+  catch(e){
+    throw{message : "Owner not returned"};
+  }
+}
+
+async function tokenCount(_address, tokenId, isTotalCard){
+  //isTotalCard is a bool value
    try{
-    trx = await _interact.methods.returnTokenCount('0xf158F22ec9ef60A64F83Cf2BD59F6b5554E9caC4', 1,true).encodeABI();
-    transaction(trx);
+    let count = await _interact.methods.returnTokenCount(_address, tokenId, isTotalCard).call();
+    //transaction(trx);
+    console.log(count);
+    return count;
    }
    catch(e){
      throw{ message : "Token count not return"};
    }
  }
  
- async function details(){
+ async function owner(tokeId){
    try{
-    trx = await _interact.methods.tokenDetails(1).encodeABI();
-    transaction(trx);
-   }
-   catch(e){
-     throw{ message : "Token details not given"};
-   }
- }
- 
- async function owner(){
-   try{
-    trx = await _interact.methods.ownerOf(1).encodeABI();
-    transaction(trx);
+    let cardOwner = await _interact.methods.ownerOf(tokeId).call();
+    //transaction(trx);
+    console.log(cardOwner) ;
+    return cardOwner;
    }
    catch (e){
      throw{ message : "Does not return owner"};
    }
 }
 
+async function transfer(_address,tokeId){
+  try{
+    let transfer = await _interact.methods.transfer(_address,tokeId).encodeABI();
+    runCode(transfer);
+  }
+  catch(e){
+    throw{ message : "Transfer not successfull"};
+  }
+}
 
-/* web3.eth.sendSignedTransaction('0x' + serialisedTransaction).on('receipt', receipt => {
-            console.log(receipt);
-            contract.methods.showAvailableToken().call().then(v => console.log("Value after increment: " + v));
-          });
-          
-  const contract = new web3.eth.Contract(abi, '0x0FAAd85289390e3Ba8e53F51De7d02aC991a6d8F', {
-    from: '0xf158F22ec9ef60A64F83Cf2BD59F6b5554E9caC4',
-    gasLimit: 3000000,
-  });
-  
-  //privatekey 1d74031771cabab38b07d31937bdcf279c712f0e2f358c1072bc0cf27898e004
-          
-*/
+async function safeTransferFrom(_address, __address, tokenId){
+  try{
+    let transfer = await _interact.methods.safeTransferFrom(_address, __address, tokenId).encodeABI();
+    runCode(transfer);
+  }
+  catch(e){
+    throw{message : "Transfer not successfull"};
+  }
+}
+
+// Below anyone line need to be execute
+
+/*tokenCreate('0x63580a35A6B6Da5c13c1Bf9c62C51FbCe64c806F', 1,30);
+owner(1);
+details(1);
+tokenCount('0x63580a35A6B6Da5c13c1Bf9c62C51FbCe64c806F',1,true); */
