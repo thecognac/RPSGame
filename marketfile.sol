@@ -66,14 +66,14 @@ contract MarketPlace{
         __address = maketPlace;
     }
     
-    function increasePoolSupply(uint256 value) public payable{ // only admin will call this function. function is responsible for increasing card count in market place
+    function increasePoolSupply(uint256 value) public payable{ // only admin will call this function. function is responsible for increasing stars count in market place
         require(msg.sender == owner_address);
         stars.transferFrom(owner_address,__address,value);
         available_star_count = available_star_count + value;
         totalPool = totalPool + value;
     }
     
-    function decreasePoolSupply(uint256 value) public { // only admin will call this function. function is responsible for decrease card count in market place
+    function decreasePoolSupply(uint256 value) public { // only admin will call this function. function is responsible for decrease stars count in market place
         require(msg.sender == owner_address);
         stars.transfer(owner_address, value);
         available_star_count = available_star_count - value;
@@ -111,6 +111,7 @@ contract MarketPlace{
     function sellStar(address starOwner, uint256 count) public {  // sell star 
         require(starOwner == msg.sender);
         require(stars.balanceOf(starOwner)>= count);
+        stars.transfer(__address , count);
         mappedPool[starOwner] = count;
         totalPool = totalPool + count;
     }
