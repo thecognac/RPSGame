@@ -196,7 +196,7 @@ contract MarketPlace{
         return available_token_for_sell;
     }
     
-    function makeTokenAvailableForBidding (uint256 tokenId) public{
+    function makeTokenAvailableForBidding (uint256 tokenId) public{  // this will tell which all tokens are avaialable for bidding
         require(nft.ownerOf(tokenId) == msg.sender, "The token is not owned by the person");
         bidderDetails[tokenId].is_available = true;
         bidderDetails[tokenId].owner = nft.ownerOf(tokenId);
@@ -204,7 +204,7 @@ contract MarketPlace{
         bidderDetails[tokenId].value = 0;
     }
     
-    function closeBidding(uint256 tokenId, address bidderAddress, uint256 amountOfBidding) public {
+    function closeBidding(uint256 tokenId, address bidderAddress, uint256 amountOfBidding) public { // this will tell the token bidder and send that token to its owner back
         address tokenOwner = nft.ownerOf(tokenId);
         nft.transfer(tokenOwner, tokenId);
         bidderDetails[tokenId].is_available = false;
