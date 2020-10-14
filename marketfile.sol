@@ -170,7 +170,8 @@ contract MarketPlace{
     function buyNFT(uint256 _tokenId) public payable {                                
         address owner;
         owner=nft.ownerOf(_tokenId);  
-        require(owner == token_details[_tokenId].seller); //checks token owner is the seller of token
+        require(owner == token_details[_tokenId].seller , "The person does not owen this token"); //checks token owner is the seller of token
+        require(bidderDetails[_tokenId].is_available != true , "The token cannot be buy as it is avaiable for bidding");
         uint256 token_type;
         uint256 value;
         (token_type,value)=nft.tokenDetails(_tokenId);
