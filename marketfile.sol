@@ -6,6 +6,7 @@ interface NFT{
     function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
    function tokenDetails (uint256 _tokenId) external view returns (uint256,uint256);
    function transfer (address , uint256 ) external payable;
+   function createToken (address ,uint256 ,uint256 ) external payable returns (uint256);
 }
 
 interface erc20{
@@ -34,27 +35,37 @@ contract MarketPlace{
         bool is_available;
         address buyer;
         address seller;
-        uint256 tokenCount;
     }
+    
+    mapping(uint256 => biddingInformation) public bidderDetails;
+    
+    struct biddingInformation{
+        address owner;
+        address bidder;
+        uint256 value;
+    }
+    
     address public __address;
     
     uint256 totalPool;
+    
     mapping(address => uint256) mappedPool;
+    
     uint256 starsPrice;
+    
     uint256 tokenPrice;
     
     modifier onlyOwner {
       require(msg.sender == owner_address);
       _;
-   }
-    
-
+    }
+   
     constructor() public{
            owner_address=msg.sender;
-       }
+    }
     
 
-    function setAddress(address _address) public onlyOwner{              //set NFT token contract address
+    function setAddress(address _address) public onlyOwner{              //set NFT token contract address (ERC721)
         nft = NFT(_address);
     }
     
@@ -66,15 +77,16 @@ contract MarketPlace{
         __address = maketPlace;
     }
     
-    function increasePoolSupply(uint256 value) public payable{ // only admin will call this function. function is responsible for increasing stars count in market place
-        require(msg.sender == owner_address);
+    function increaseStarSupply(uint256 value) public payable{ // only admin will call this function. function is responsible for increasing star count in market place
+        require(msg.sender == owner_address, "Only Admin Can Call");
         stars.transferFrom(owner_address,__address,value);
         available_star_count = available_star_count + value;
         totalPool = totalPool + value;
+        mappedPool[__address] = value;
     }
     
-    function decreasePoolSupply(uint256 value) public { // only admin will call this function. function is responsible for decrease stars count in market place
-        require(msg.sender == owner_address);
+    function decreaseStarSupply(uint256 value) public { // only admin will call this function. function is responsible for decrease stars count in market place
+        require(msg.sender == owner_address, "Only Admin Can Call");
         stars.transfer(owner_address, value);
         available_star_count = available_star_count - value;
         totalPool = totalPool - value;
@@ -90,7 +102,6 @@ contract MarketPlace{
     
     function showTotalPool() public view returns(uint256){ // this will show the total pool size i.e stars available
         return totalPool;
-        
     }
     
     function BuyStars(address _from ,  uint256 amount) public payable{ // this will be call by player who want to buy stars 
@@ -111,9 +122,24 @@ contract MarketPlace{
     function sellStar(address starOwner, uint256 count) public {  // sell star 
         require(starOwner == msg.sender);
         require(stars.balanceOf(starOwner)>= count);
-        stars.transfer(__address , count);
+        stars.transfer(__address,count);
         mappedPool[starOwner] = count;
         totalPool = totalPool + count;
+    }
+    
+    function increaseTokenSupply(uint256 cardType , uint256 value) public payable{
+        require(msg.sender == owner_address, "Only Admin Can Call");
+        uint256 tokenid = nft.createToken(__address , cardType , value);
+        token_details[tokenid].is_available = true;
+        token_details[tokenid].buyer = address(0);
+        token_details[tokenid].seller = __address;
+        available_token_count++;
+    }
+    
+    function decreaseTokenSupply (uint256 tokenId) public payable{
+        require(msg.sender == owner_address, "Only Admin Can Call");
+        nft.transfer(owner_address, tokenId);
+        available_token_count--;
     }
     
     function sellNFT(uint256 _tokenId) public{    //put tokenid for sell
@@ -129,6 +155,8 @@ contract MarketPlace{
         if(present==0){
          tokenid_added.push(_tokenId);
         }
+        //transfer function should be called after this function
+       
         token_details[_tokenId].is_available=true;
         token_details[_tokenId].seller=msg.sender;
         token_details[_tokenId].buyer=address(0);
@@ -154,7 +182,7 @@ contract MarketPlace{
         available_token_count--;
     }
 
-    function showAvailableToken() public view returns(uint256[] memory available){
+    function showAvailableToken() public view returns(uint256[] memory available){ // returns the array of token present in marketplace
         uint256[] memory available_token_for_sell = new uint[](available_token_count);
         uint j;
         for(uint256 i=0;i<tokenid_added.length;i++){
@@ -165,6 +193,13 @@ contract MarketPlace{
         }
         return available_token_for_sell;
       
+    }
+    
+    function closeBidding(uint256 tokenId, address bidderAddress, uint256 amountOfBidding) public {
+        address tokenOwner = nft.ownerOf(tokenId);
+        bidderDetails[tokenId].owner = tokenOwner;
+        bidderDetails[tokenId].bidder = bidderAddress;
+        bidderDetails[tokenId].value = amountOfBidding;
     }
     
 }
