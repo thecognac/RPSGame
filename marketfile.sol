@@ -40,6 +40,7 @@ contract MarketPlace{
     mapping(uint256 => biddingInformation) public bidderDetails;
     
     struct biddingInformation{
+        bool is_available;
         address owner;
         address bidder;
         uint256 value;
@@ -82,7 +83,7 @@ contract MarketPlace{
         stars.transferFrom(owner_address,__address,value);
         available_star_count = available_star_count + value;
         totalPool = totalPool + value;
-        mappedPool[__address] = value;
+        mappedPool[__address] += value;
     }
     
     function decreaseStarSupply(uint256 value) public { // only admin will call this function. function is responsible for decrease stars count in market place
@@ -90,6 +91,7 @@ contract MarketPlace{
         stars.transfer(owner_address, value);
         available_star_count = available_star_count - value;
         totalPool = totalPool - value;
+        mappedPool[__address] -= value;
     }
     
     function setStarsPrice(uint256 _price )public onlyOwner{ // this is rresponsible for setting the star price
@@ -165,7 +167,7 @@ contract MarketPlace{
         
     }   
  
-    function buyNFT(uint256 _tokenId) public payable{                                
+    function buyNFT(uint256 _tokenId) public payable {                                
         address owner;
         owner=nft.ownerOf(_tokenId);  
         require(owner == token_details[_tokenId].seller); //checks token owner is the seller of token
@@ -192,11 +194,20 @@ contract MarketPlace{
             }
         }
         return available_token_for_sell;
-      
+    }
+    
+    function makeTokenAvailableForBidding (uint256 tokenId) public{
+        require(nft.ownerOf(tokenId) == msg.sender, "The token is not owned by the person");
+        bidderDetails[tokenId].is_available = true;
+        bidderDetails[tokenId].owner = nft.ownerOf(tokenId);
+        bidderDetails[tokenId].bidder = address(0);
+        bidderDetails[tokenId].value = 0;
     }
     
     function closeBidding(uint256 tokenId, address bidderAddress, uint256 amountOfBidding) public {
         address tokenOwner = nft.ownerOf(tokenId);
+        nft.transfer(tokenOwner, tokenId);
+        bidderDetails[tokenId].is_available = false;
         bidderDetails[tokenId].owner = tokenOwner;
         bidderDetails[tokenId].bidder = bidderAddress;
         bidderDetails[tokenId].value = amountOfBidding;
