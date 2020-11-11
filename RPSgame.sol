@@ -183,5 +183,31 @@ contract RPS{
     }
     function returnSeason() public view returns(uint256){
     return currentSeason;
-}
+    }
+    
+    function countMakeUp(address playeraddress) public payable{
+        uint256 count1 = returnTokenCount(playeraddress, 1,false);
+        uint256 count2 = returnTokenCount(playeraddress, 2,false);
+        uint256 count3 = returnTokenCount(playeraddress, 3,false);
+        for(uint256 k=0 ; k < 3 ; k++){
+            if( count1 < 20 && k == 0){
+                count1 = 20 - count1;
+                for(uint256 i=0; i< count1 ; i++){
+                    createToken(playeraddress,1,20);
+                }
+            }
+            if( count2 < 20 && k == 1){
+                count2 = 20 - count2;
+                for(uint256 j=0; j< count2 ; j++){
+                    createToken(playeraddress,2,20);
+                }
+            }
+            if( count3 < 20 && k == 2){
+                count3 = 20 - count3;
+                for(uint256 m=0; m< count1 ; m++){
+                    createToken(playeraddress,3,20);
+                }
+            }
+        }
+    }
 }
