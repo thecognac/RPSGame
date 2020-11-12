@@ -5,6 +5,7 @@ contract RPS{
     struct card{
         uint256 cardtype; //1: Rock , 2: Paper, 3 : Scissors  
         uint256 value;
+        uint256 free; // 1 : Free , 0 : Purchased
     }
     
     mapping (address => mapping(uint256 => mapping(uint256 => card)))public player;
@@ -52,6 +53,7 @@ contract RPS{
         require(msg.sender == contractowner || msg.sender == gameContractAddress);
         player[playeraddress][currentSeason][++tokenId].cardtype = cardtype;
         player[playeraddress][currentSeason][tokenId].value = _value;
+        player[playeraddress][currentSeason][tokenId].free=1;
         ownToken[playeraddress][currentSeason].push(tokenId);
         playersTokenCount[playeraddress][currentSeason][cardtype]+=1;
         string memory tempTok ="";
@@ -186,28 +188,34 @@ contract RPS{
     }
     
     function countMakeUp(address playeraddress) public payable{
-        uint256 count1 = returnTokenCount(playeraddress, 1,false);
-        uint256 count2 = returnTokenCount(playeraddress, 2,false);
-        uint256 count3 = returnTokenCount(playeraddress, 3,false);
+        uint256 count1 = returnTokenCount(playeraddress, 1,false); // count of Rock available
+        uint256 count2 = returnTokenCount(playeraddress, 2,false); // count of Paper available
+        uint256 count3 = returnTokenCount(playeraddress, 3,false); // count of Scissors available
         for(uint256 k=0 ; k < 3 ; k++){
             if( count1 < 20 && k == 0){
                 count1 = 20 - count1;
                 for(uint256 i=0; i< count1 ; i++){
-                    createToken(playeraddress,1,20);
+                    createToken(playeraddress,1,20); // this will make the count of the Rock to 20 
                 }
             }
             if( count2 < 20 && k == 1){
                 count2 = 20 - count2;
                 for(uint256 j=0; j< count2 ; j++){
-                    createToken(playeraddress,2,20);
+                    createToken(playeraddress,2,20); // this will make the count of the Paper to 20 
                 }
             }
             if( count3 < 20 && k == 2){
                 count3 = 20 - count3;
                 for(uint256 m=0; m< count1 ; m++){
-                    createToken(playeraddress,3,20);
+                    createToken(playeraddress,3,20); // this will make the count of the Scissors to 20 
                 }
             }
         }
+    }
+    
+    function freeCardOrPurchased(address playerAddress, uint256 _tokenId , uint256 purchasedValue) public returns(uint256){ // function to change the value of card from free card to purchsed card
+     // this will be called from marketplace only as then it would become purchased card
+        uint256 value = player[playerAddress][currentSeason][_tokenId].free=purchasedValue;
+        return value;
     }
 }
