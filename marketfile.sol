@@ -16,7 +16,9 @@ interface NFT {
         returns (uint256, uint256);
 
     function transfer(address, uint256) external payable;
-
+    
+    function freeCardOrPurchased(address , uint256, uint256) external returns(uint256);
+    
     function createToken(
         address,
         uint256,
@@ -208,7 +210,7 @@ contract MarketPlace {
         require(
             bidderDetails[_tokenId].is_available != true,
             "The token cannot be buy as it is avaiable for bidding"
-        );
+        ); 
         uint256 token_type;
         uint256 value;
         (token_type, value) = nft.tokenDetails(_tokenId);
@@ -217,6 +219,7 @@ contract MarketPlace {
         seller = token_details[_tokenId].seller;
         require(seller != address(0));
         nft.transfer(msg.sender, _tokenId);
+        nft.freeCardOrPurchased(msg.sender, _tokenId,0); // this will make that the card is purchased card
         token_details[_tokenId].is_available = false;
         token_details[_tokenId].buyer = msg.sender;
         available_token_count--;
@@ -252,11 +255,7 @@ contract MarketPlace {
         bidderDetails[tokenId].value = 0;
     }
 
-    function closeBidding(
-        uint256 tokenId,
-        address bidderAddress,
-        uint256 amountOfBidding
-    ) public {
+    function closeBidding(uint256 tokenId, address bidderAddress, uint256 amountOfBidding) public {
         address tokenOwner = nft.ownerOf(tokenId);
         nft.transfer(tokenOwner, tokenId);
         bidderDetails[tokenId].is_available = false;
