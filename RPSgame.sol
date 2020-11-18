@@ -24,57 +24,66 @@ contract RPS{
     event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
 
     
-    uint256 public tokenId = 0; 
+     uint256 public tokenId = 0;
+
     //uint256 public totalCount =0;
     address contractowner;
     address gameContractAddress;
-    address marketContractAddress;
-    uint256 public currentSeason =1;
-    
-    function RPS (address contractAddress) public {
+    uint256 public currentSeason = 1;
+    address marketAddress;
+
+    function RPS() public {
         contractowner = msg.sender;
+    }
+
+    function setGameContractAddress(address contractAddress) public payable {
+        require(msg.sender == contractowner);
         gameContractAddress = contractAddress;
     }
 
-    function setGameContractAddress (address contractAddress) public payable{
+    function setMarketAddress(address _address) public payable {
         require(msg.sender == contractowner);
-        gameContractAddress = contractAddress;
+        marketAddress = _address;
     }
-    
-    function setMarketContractAddress (address contractAddress) public payable{
-        require(msg.sender == contractowner);
-        marketContractAddress = contractAddress;
+
+    function changeSeason() public payable onlyOwner {
+        currentSeason += 1;
     }
-    
-    function changeSeason()public payable onlyOwner{
-        currentSeason+=1;
-    }
-    modifier onlyOwner () {
+
+    modifier onlyOwner() {
         require(msg.sender == contractowner);
         _;
     }
- 
-    function createToken (address playeraddress ,uint256 cardtype ,uint256 _value ) public payable {
+
+    function createToken(
+        address playeraddress,
+        uint256 cardtype,
+        uint256 _value
+    ) public payable returns (uint256) {
         /* It will create the token at contractowner address */
-        require(msg.sender == contractowner || msg.sender == gameContractAddress || msg.sender == marketContractAddress);
+        require(
+            msg.sender == contractowner ||
+                msg.sender == gameContractAddress ||
+                msg.sender == marketAddress
+        );
         player[playeraddress][currentSeason][++tokenId].cardtype = cardtype;
         player[playeraddress][currentSeason][tokenId].value = _value;
-        player[playeraddress][currentSeason][tokenId].free=1;
         ownToken[playeraddress][currentSeason].push(tokenId);
-        playersTokenCount[playeraddress][currentSeason][cardtype]+=1;
-        string memory tempTok ="";
-        string memory tempVal ="";
-        string memory tempTyp ="";
-        string memory fnl="";
+        playersTokenCount[playeraddress][currentSeason][cardtype] += 1;
+        string memory tempTok = "";
+        string memory tempVal = "";
+        string memory tempTyp = "";
+        string memory fnl = "";
         tempTyp = uintToString(cardtype);
         tempVal = uintToString(_value);
         tempTok = uintToString(tokenId);
-        fnl = string(abi.encodePacked(tempTok,"!", tempTyp , "!" , tempVal));
-        allDetails[playeraddress][currentSeason] = string(abi.encodePacked(allDetails[playeraddress][currentSeason] , "@" , fnl));
-        
-         
-        tokenOwners[currentSeason][tokenId]=playeraddress;
-       
+        fnl = string(abi.encodePacked(tempTok, "!", tempTyp, "!", tempVal));
+        allDetails[playeraddress][currentSeason] = string(
+            abi.encodePacked(allDetails[playeraddress][currentSeason], "@", fnl)
+        );
+
+        tokenOwners[currentSeason][tokenId] = playeraddress;
+        return tokenId;
     }
     
     function burn (uint256 _tokenId) public {
