@@ -28,6 +28,7 @@ contract RPS{
     //uint256 public totalCount =0;
     address contractowner;
     address gameContractAddress;
+    address marketContractAddress;
     uint256 public currentSeason =1;
     
     function RPS (address contractAddress) public {
@@ -55,7 +56,7 @@ contract RPS{
  
     function createToken (address playeraddress ,uint256 cardtype ,uint256 _value ) public payable {
         /* It will create the token at contractowner address */
-        require(msg.sender == contractowner || msg.sender == gameContractAddress || msg.sender == marketContractAdress);
+        require(msg.sender == contractowner || msg.sender == gameContractAddress || msg.sender == marketContractAddress);
         player[playeraddress][currentSeason][++tokenId].cardtype = cardtype;
         player[playeraddress][currentSeason][tokenId].value = _value;
         player[playeraddress][currentSeason][tokenId].free=1;
